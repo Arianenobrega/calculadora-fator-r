@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Calculadora Simples Nacional – Anexo III/V + Fator R + Pró‑Labore (corrigida 2025)</title>
+  <style>
+    :root { --bg:#0b1020; --card:#121936; --muted:#9fb3c8; --text:#ecf2ff; --accent:#7aa2ff; }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Arial;background:linear-gradient(120deg,#0a0f23,#0e1733);color:var(--text)}
+    .wrap{max-width:980px;margin:28px auto;padding:0 16px}
+    .title{display:flex;align-items:center;gap:12px}
+    .badge{background:#1c2550;color:var(--accent);padding:4px 10px;border-radius:999px;font-weight:600;font-size:12px;letter-spacing:.4px}
+    .card{background:var(--card);border:1px solid #1b244a;border-radius:16px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+    .col-12{grid-column:span 12}.col-8{grid-column:span 8}.col-6{grid-column:span 6}.col-4{grid-column:span 4}.col-3{grid-column:span 3}
+    @media (max-width:820px){.col-8,.col-6,.col-4,.col-3{grid-column:span 12}}
+    label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+    input[type="text"],input[type="number"],select{width:100%;padding:12px;border-radius:12px;border:1px solid #253066;background:#0e1535;color:var(--text);outline:none}
+    input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+    .row{display:flex;gap:12px;align-items:center}
+    .btn{border:none;border-radius:12px;padding:10px 14px;font-weight:600;cursor:pointer}
+    .btn-ghost{background:#0e1535;color:var(--text);border:1px solid #253066}
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+    .kpi{background:#0f1740;border:1px solid #24306a;border-radius:14px;padding:14px}
+    .kpi .label{font-size:12px;color:var(--muted);margin-bottom:6px}
+    .kpi .value{font-size:22px;font-weight:800}
+    .table{width:100%;border-collapse:collapse}
+    .table th,.table td{padding:10px 8px;border-bottom:1px dashed #253066;text-align:left}
+    .right{text-align:right}
+    .status{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid #22306e}
+    .ok{background:#0c1f1a;color:#9be7c8;border-color:#1f5d4a}
+    .bad{background:#2a1212;color:#ffb3b3;border-color:#642c2c}
+    .warn{background:#2a2612;color:#ffe0a3;border-color:#665b2c}
+    .muted{color:var(--muted);font-size:12px}
+    .footer-note{margin-top:14px;font-size:12px;color:#aebbd7}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="title">
+      <h1 style="margin:0">Simples Nacional – Serviços (Anexo III/V + Fator R + Pró‑Labore)</h1>
+      <span class="badge">Tabelas do Simples (2018+) • IRRF corrigido (mai/2025)</span>
+    </div>
+
+    <!-- Bloco Simples + Fator R -->
+    <div class="card" style="margin-top:14px;">
+      <div class="grid">
+        <div class="col-4">
+          <label>RBT12 – Receita Bruta últimos 12 meses (R$)</label>
+          <input id="rbt12" type="text" inputmode="decimal" placeholder="R$ 0,00" />
+        </div>
+        <div class="col-4">
+          <label>Receita Bruta do mês (R$)</label>
+          <input id="rbmes" type="text" inputmode="decimal" placeholder="R$ 0,00" />
+        </div>
+        <div class="col-4">
+          <label>Folha de salários 12 meses (R$)</label>
+          <input id="fs12" type="text" inputmode="decimal" placeholder="R$ 0,00" />
+        </div>
+
+        <div class="col-8">
+          <label>Regra de enquadramento</label>
+          <div class="row">
+            <select id="enq">
+              <option value="fatorR" selected>Atividade sujeita ao Fator R (≥ 28% ➜ Anexo III; &lt; 28% ➜ Anexo V)</option>
+              <option value="sempreIII">Atividade sempre no Anexo III (sem Fator R)</option>
+              <option value="sempreV">Atividade sempre no Anexo V (sem Fator R)</option>
+            </select>
+            <button id="exemplo" class="btn btn-ghost">Preencher Exemplo</button>
+          </div>
+        </div>
+        <div class="col-4">
+          <label>Arredondar resultados</label>
+          <select id="round">
+            <option value="2" selected>2 casas</option>
+            <option value="0">Sem arredondar</option>
+          </select>
+        </div>
+
+        <div class="col-12">
+          <div id="statusFR" class="status warn">Informe RBT12 e Folha 12M para ver o Fator R.</div>
+        </div>
+
+        <div class="col-12">
+          <div class="kpis">
+            <div class="kpi"><div class="label">Fator R</div><div id="fatorR" class="value">0,00%</div></div>
+            <div class="kpi"><div class="label">Anexo III – Alíquota efetiva</div><div id="aliqIII" class="value">0,00%</div></div>
+            <div class="kpi"><div class="label">Anexo V – Alíquota efetiva</div><div id="aliqV" class="value">0,00%</div></div>
+            <div class="kpi"><div class="label">DAS estimado do mês</div><div id="dasOut" class="value">R$ 0,00</div></div>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <table class="table">
+            <thead>
+              <tr>
+                <th style="width:28%">Cenário</th>
+                <th>Faixa</th>
+                <th>Alíquota nominal</th>
+                <th>Parcela a deduzir (PD)</th>
+                <th>Alíquota efetiva</th>
+                <th class="right">DAS do mês</th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bloco Pró‑Labore (INSS + IRRF) -->
+    <div class="card" style="margin-top:16px;">
+      <div class="grid">
+        <div class="col-12">
+          <h2 style="margin:0 0 8px 0; font-size:18px;">Pró‑Labore do Sócio (INSS + IRRF)</h2>
+          <p class="muted">INSS do contribuinte individual (11% limitado ao teto) e IRRF mensal <b>corrigido (mai/2025)</b>, com <b>desconto simplificado de R$ 607,20</b> e isenção até <b>R$ 3.036,00</b>.</p>
+        </div>
+        <div class="col-3">
+          <label>Pró‑labore bruto (R$)</label>
+          <input id="pl_bruto" type="text" inputmode="decimal" placeholder="R$ 0,00" />
+        </div>
+        <div class="col-3">
+          <label>Dependentes (R$ 189,59 cada)</label>
+          <input id="pl_dep" type="number" min="0" step="1" value="0" />
+        </div>
+        <div class="col-3">
+          <label>Pensão alimentícia (R$)</label>
+          <input id="pl_pensao" type="text" inputmode="decimal" placeholder="R$ 0,00" />
+        </div>
+        <div class="col-3">
+          <label>Isenção até 2 SM</label>
+          <select id="pl_isencao">
+            <option value="on" selected>Aplicar (R$ 3.036,00)</option>
+            <option value="off">Não aplicar</option>
+          </select>
+        </div>
+
+        <div class="col-12">
+          <div class="kpis">
+            <div class="kpi"><div class="label">INSS do sócio (11% c/ teto)</div><div id="pl_inss" class="value">R$ 0,00</div></div>
+            <div class="kpi"><div class="label">Base IRRF</div><div id="pl_base_ir" class="value">R$ 0,00</div></div>
+            <div class="kpi"><div class="label">IRRF devido</div><div id="pl_irrf" class="value">R$ 0,00</div></div>
+            <div class="kpi"><div class="label">Pró‑labore líquido</div><div id="pl_liquido" class="value">R$ 0,00</div></div>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Etapa</th>
+                <th class="right">Valor</th>
+              </tr>
+            </thead>
+            <tbody id="pl_rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <p class="footer-note">⚠️ Estimativa educativa; verifique regras específicas (ISS fixo, retenções, partilha, sublimites, início de atividade com RBT12 proporcional). Para Fator R: serviços elegíveis – Fator R ≥ 28% ➜ Anexo III; &lt; 28% ➜ Anexo V.</p>
+  </div>
+
+  <script>
+    const BRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+    function parseBRL(str){ if(!str) return 0; const cleaned=str.replace(/[^0-9,.-]/g,'').replace(/\./g,'').replace(',','.'); const n=parseFloat(cleaned); return isNaN(n)?0:n; }
+    function fmtBRL(n){ return BRL.format(n||0); }
+    function fmtPct(n){ return isFinite(n)? (n*1).toLocaleString('pt-BR', {style:'percent', minimumFractionDigits:2, maximumFractionDigits:2}) : '—'; }
+    function round(n, dec){ if(!isFinite(n)) return 0; const f=Math.pow(10, dec); return Math.round(n*f)/f; }
+
+    // ===== Tabelas Simples (desde 01/01/2018) =====
+    const TABELA_III = [
+      { lim: 180000,  aliq: 0.06,  pd: 0 },
+      { lim: 360000,  aliq: 0.112, pd: 9360 },
+      { lim: 720000,  aliq: 0.135, pd: 17640 },
+      { lim: 1800000, aliq: 0.16,  pd: 35640 },
+      { lim: 3600000, aliq: 0.21,  pd: 125640 },
+      { lim: 4800000, aliq: 0.33,  pd: 648000 },
+    ];
+    const TABELA_V = [
+      { lim: 180000,  aliq: 0.155, pd: 0 },
+      { lim: 360000,  aliq: 0.18,  pd: 4500 },
+      { lim: 720000,  aliq: 0.195, pd: 9900 },
+      { lim: 1800000, aliq: 0.205, pd: 17100 },
+      { lim: 3600000, aliq: 0.23,  pd: 62100 },
+      { lim: 4800000, aliq: 0.305, pd: 540000 },
+    ];
+
+    function faixa(rbt12, tab){ for(let i=0;i<tab.length;i++){ if(rbt12<=tab[i].lim) return { idx:i+1, ...tab[i] }; } return { idx: tab.length, ...tab[tab.length-1] }; }
+    function aliqEfetiva(rbt12, aliqNom, pd){ if(rbt12<=0) return 0; return ((rbt12 * aliqNom) - pd) / rbt12; }
+
+    const els = {
+      rbt12: document.getElementById('rbt12'),
+      rbmes: document.getElementById('rbmes'),
+      fs12: document.getElementById('fs12'),
+      enq: document.getElementById('enq'),
+      round: document.getElementById('round'),
+      fatorR: document.getElementById('fatorR'),
+      statusFR: document.getElementById('statusFR'),
+      aliqIII: document.getElementById('aliqIII'),
+      aliqV: document.getElementById('aliqV'),
+      dasOut: document.getElementById('dasOut'),
+      rows: document.getElementById('rows'),
+      exemplo: document.getElementById('exemplo'),
+    };
+
+    function recalc(){
+      const rbt12 = parseBRL(els.rbt12.value);
+      const rbmes = parseBRL(els.rbmes.value);
+      const fs12  = parseBRL(els.fs12.value);
+      const rule  = els.enq.value; // fatorR | sempreIII | sempreV
+      const dec = Number(els.round.value||2);
+
+      const fr = (rbt12>0 && fs12>=0) ? (fs12 / rbt12) : NaN;
+      els.fatorR.textContent = isNaN(fr)? '—' : fmtPct(fr);
+      els.statusFR.className = 'status ' + (isNaN(fr) ? 'warn' : (fr >= 0.28 ? 'ok' : 'bad'));
+      els.statusFR.textContent = isNaN(fr) ? 'Informe RBT12 e Folha 12M para ver o Fator R.' : (fr>=0.28 ? 'Fator R ≥ 28% → Atividade elegível pode tributar pelo Anexo III.' : 'Fator R < 28% → Atividade elegível tributa pelo Anexo V.');
+
+      const fIII = faixa(rbt12, TABELA_III);
+      const fV   = faixa(rbt12, TABELA_V);
+      let aIII = aliqEfetiva(rbt12, fIII.aliq, fIII.pd);
+      let aV   = aliqEfetiva(rbt12, fV.aliq,  fV.pd);
+      aIII = dec? round(aIII, dec+2) : aIII; aV = dec? round(aV, dec+2) : aV;
+      els.aliqIII.textContent = fmtPct(aIII);
+      els.aliqV.textContent   = fmtPct(aV);
+
+      els.rows.innerHTML='';
+      [
+        { nome:'Anexo III', faixa:fIII.idx, aliq:fIII.aliq, pd:fIII.pd, a:aIII },
+        { nome:'Anexo V',   faixa:fV.idx,   aliq:fV.aliq,  pd:fV.pd,  a:aV   },
+      ].forEach(c=>{
+        const das = rbmes * c.a;
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${c.nome}</td><td>${c.faixa}ª</td><td>${(c.aliq*100).toFixed(2).replace('.',',')}%</td><td>${fmtBRL(c.pd)}</td><td>${fmtPct(c.a)}</td><td class="right">${fmtBRL(dec? round(das,dec):das)}</td>`;
+        els.rows.appendChild(tr);
+      });
+
+      let recomendado;
+      if(rule==='sempreIII') recomendado='Anexo III (atividade não sujeita ao Fator R)';
+      else if(rule==='sempreV') recomendado='Anexo V (atividade não sujeita ao Fator R)';
+      else recomendado=(fr>=0.28)?'Anexo III (Fator R ≥ 28%)':'Anexo V (Fator R < 28%)';
+      const dasRec = recomendado.startsWith('Anexo III')? (rbmes*aIII):(rbmes*aV);
+      els.dasOut.textContent = fmtBRL(dec? round(dasRec,dec):dasRec);
+    }
+
+    els.rbt12.addEventListener('input', recalc);
+    els.rbmes.addEventListener('input', recalc);
+    els.fs12.addEventListener('input', recalc);
+    els.enq.addEventListener('change', recalc);
+    els.round.addEventListener('change', recalc);
+    els.exemplo.addEventListener('click', ()=>{ els.rbt12.value='R$ 720.000,00'; els.rbmes.value='R$ 60.000,00'; els.fs12.value='R$ 210.000,00'; els.enq.value='fatorR'; recalc(); });
+
+    // ===== Pró‑Labore (INSS + IRRF) – 2025 corrigido =====
+    const PL_CONST = { SAL_MIN_2025:1518.00, ISENCAO_2SM_2025:3036.00, INSS_ALIQ:0.11, INSS_TETO_SAL:8157.41, DEP_DEDUCAO:189.59, DESC_SIMP_MENSAL:607.20,
+      IR_TABELA:[
+        { max:2428.80, aliq:0.00,  ded:0.00 },
+        { max:2826.65, aliq:0.075, ded:182.16 },
+        { max:3751.05, aliq:0.15,  ded:394.16 },
+        { max:4664.68, aliq:0.225, ded:675.49 },
+        { max:Infinity,aliq:0.275, ded:908.73 },
+      ] };
+
+    const plEls = { bruto:document.getElementById('pl_bruto'), dep:document.getElementById('pl_dep'), pensao:document.getElementById('pl_pensao'), isencao:document.getElementById('pl_isencao'), inss:document.getElementById('pl_inss'), baseIR:document.getElementById('pl_base_ir'), irrf:document.getElementById('pl_irrf'), liquido:document.getElementById('pl_liquido'), rows:document.getElementById('pl_rows') };
+
+    function calcINSS(bruto){ const base=Math.min(bruto, PL_CONST.INSS_TETO_SAL); return base * PL_CONST.INSS_ALIQ; }
+    function faixaIR(base){ for(const f of PL_CONST.IR_TABELA){ if(base<=f.max) return f; } return PL_CONST.IR_TABELA.at(-1); }
+    function calcIRRF(base){ const f=faixaIR(base); return { imposto: Math.max(0,(base*f.aliq)-f.ded), faixa:f}; }
+
+    function recalcProLab(){
+      const bruto=parseBRL(plEls.bruto.value);
+      const depQt=Math.max(0, Number(plEls.dep.value||0));
+      const pensao=parseBRL(plEls.pensao.value);
+      const aplica2SM = (plEls.isencao.value==='on');
+
+      // INSS do sócio (11% com teto de salário de contribuição)
+      const inss=calcINSS(bruto);
+
+      // Método 1: Deduções legais (INSS + dependentes + pensão)
+      const baseLegal=Math.max(0, bruto - inss - (depQt*PL_CONST.DEP_DEDUCAO) - pensao);
+      const irLegal=calcIRRF(baseLegal).imposto;
+
+      // Método 2: Desconto simplificado mensal (R$ 607,20) – não deduz INSS/dep/pensão
+      const baseSimp=Math.max(0, bruto - PL_CONST.DESC_SIMP_MENSAL);
+      const irSimp=calcIRRF(baseSimp).imposto;
+
+      // Escolher o menor IRRF
+      let usarSimplificado = irSimp <= irLegal;
+      let baseIR = usarSimplificado ? baseSimp : baseLegal;
+      let irrf   = usarSimplificado ? irSimp : irLegal;
+
+      // Isenção até 2 SM
+      if(aplica2SM && bruto <= PL_CONST.ISENCAO_2SM_2025){ irrf = 0; }
+
+      const liquido = bruto - inss - irrf - pensao;
+
+      plEls.inss.textContent   = fmtBRL(round(inss,2));
+      plEls.baseIR.textContent = fmtBRL(round(baseIR,2));
+      plEls.irrf.textContent   = fmtBRL(round(irrf,2));
+      plEls.liquido.textContent= fmtBRL(round(liquido,2));
+
+      plEls.rows.innerHTML='';
+      [
+        ['Pró‑labore bruto', bruto],
+        ['(-) INSS do sócio (11% com teto)', inss],
+        ['(-) Pensão alimentícia', pensao],
+        ['(-) Dedução por dependentes', depQt*PL_CONST.DEP_DEDUCAO],
+        ['= Base de cálculo IRRF', baseIR],
+        ['IRRF devido', irrf],
+        ['= Pró‑labore líquido', liquido],
+      ].forEach(([k,v])=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${k}</td><td class="right">${fmtBRL(round(v,2))}</td>`; plEls.rows.appendChild(tr); });
+    }
+
+    plEls.bruto.addEventListener('input', recalcProLab);
+    plEls.dep.addEventListener('input', recalcProLab);
+    plEls.pensao.addEventListener('input', recalcProLab);
+    plEls.isencao.addEventListener('change', recalcProLab);
+
+    // Inicializar
+    recalc();
+    recalcProLab();
+  </script>
+</body>
+</html>
